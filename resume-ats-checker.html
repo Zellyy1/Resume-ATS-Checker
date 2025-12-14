@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume ATS Checker</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: #0a0a0a;
+            color: #e4e4e7;
+            overflow-x: hidden;
+        }
+
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #18181b;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #3f3f46;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #52525b;
+        }
+
+        /* Animated gradient background */
+        .gradient-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 0;
+            opacity: 0.15;
+            pointer-events: none;
+        }
+
+        .gradient-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            animation: float 20s ease-in-out infinite;
+        }
+
+        .orb-1 {
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, #6366f1 0%, transparent 70%);
+            top: -200px;
+            left: -200px;
+            animation-delay: 0s;
+        }
+
+        .orb-2 {
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, #8b5cf6 0%, transparent 70%);
+            bottom: -150px;
+            right: -150px;
+            animation-delay: 5s;
+        }
+
+        .orb-3 {
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, #06b6d4 0%, transparent 70%);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation-delay: 10s;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translate(0, 0) scale(1);
+            }
+            33% {
+                transform: translate(50px, -50px) scale(1.1);
+            }
+            66% {
+                transform: translate(-50px, 50px) scale(0.9);
+            }
+        }
+
+        /* Card styles */
+        .glass-card {
+            background: rgba(24, 24, 27, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(63, 63, 70, 0.5);
+            border-radius: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(99, 102, 241, 0.5);
+            box-shadow: 0 0 40px rgba(99, 102, 241, 0.1);
+        }
+
+        /* Button styles */
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            border: none;
+            padding: 12px 28px;
+            border-radius: 10px;
+            font-weight: 600;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Input styles */
+        .input-field {
+            background: rgba(24, 24, 27, 0.6);
+            border: 1px solid rgba(63, 63, 70, 0.5);
+            border-radius: 10px;
+            padding: 12px 16px;
+            color: #e4e4e7;
+            width: 100%;
+            transition: all 0.3s ease;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #6366f1;
+            background: rgba(24, 24, 27, 0.8);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        /* Upload area */
+        .upload-area {
+            border: 2px dashed rgba(63, 63, 70, 0.5);
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(24, 24, 27, 0.3);
+        }
+
+        .upload-area:hover {
+            border-color: #6366f1;
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .upload-area.active {
+            border-color: #06b6d4;
+            background: rgba(6, 182, 212, 0.05);
+        }
+
+        /* Progress bar */
+        .progress-bar {
+            height: 4px;
+            background: rgba(63, 63, 70, 0.3);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #6366f1, #8b5cf6);
+            transition: width 0.3s ease;
+        }
+
+        /* Score circle */
+        @keyframes dash {
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        .score-circle {
+            animation: dash 2s ease-out forwards;
+        }
+
+        /* Fade in animation */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.6s ease-out forwards;
+        }
+
+        /* Badge styles */
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            margin: 4px;
+        }
+
+        .badge-success {
+            background: rgba(34, 197, 94, 0.2);
+            color: #4ade80;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .badge-warning {
+            background: rgba(251, 146, 60, 0.2);
+            color: #fb923c;
+            border: 1px solid rgba(251, 146, 60, 0.3);
+        }
+
+        .badge-error {
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        /* Loading spinner */
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(99, 102, 241, 0.3);
+            border-top-color: #6366f1;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useRef, useEffect } = React;
+
+        // Lucide icons as SVG components
+        const UploadIcon = () => (
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+        );
+
+        const FileIcon = () => (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
+                <polyline points="13 2 13 9 20 9"/>
+            </svg>
+        );
+
+        const CheckIcon = () => (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12"/>
+            </svg>
+        );
+
+        const XIcon = () => (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+        );
+
+        const AlertIcon = () => (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+        );
+
+        const ScoreCircle = ({ score }) => {
+            const radius = 70;
+            const circumference = 2 * Math.PI * radius;
+            const offset = circumference - (score / 100) * circumference;
+
+            const getColor = (score) => {
+                if (score >= 75) return '#4ade80';
+                if (score >= 50) return '#fb923c';
+                return '#f87171';
+            };
+
+            return (
+                <div className="flex flex-col items-center justify-center">
+                    <svg width="180" height="180" className="transform -rotate-90">
+                        <circle
+                            cx="90"
+                            cy="90"
+                            r={radius}
+                            stroke="rgba(63, 63, 70, 0.3)"
+                            strokeWidth="12"
+                            fill="none"
+                        />
+                        <circle
+                            cx="90"
+                            cy="90"
+                            r={radius}
+                            stroke={getColor(score)}
+                            strokeWidth="12"
+                            fill="none"
+                            strokeDasharray={circumference}
+                            strokeDashoffset={offset}
+                            strokeLinecap="round"
+                            className="score-circle"
+                            style={{ strokeDashoffset: circumference }}
+                        />
+                    </svg>
+                    <div className="absolute text-center">
+                        <div className="text-5xl font-bold" style={{ color: getColor(score) }}>
+                            {score}%
+                        </div>
+                        <div className="text-sm text-zinc-500 mt-1">Match Score</div>
+                    </div>
+                </div>
+            );
+        };
+
+        const ResumeATSChecker = () => {
+            const [apiKey, setApiKey] = useState('');
+            const [resumeFile, setResumeFile] = useState(null);
+            const [jobFile, setJobFile] = useState(null);
+            const [isAnalyzing, setIsAnalyzing] = useState(false);
+            const [results, setResults] = useState(null);
+            const [error, setError] = useState('');
+            const [dragActive, setDragActive] = useState({ resume: false, job: false });
+
+            const resumeInputRef = useRef(null);
+            const jobInputRef = useRef(null);
+
+            const handleDrag = (e, type) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (e.type === "dragenter" || e.type === "dragover") {
+                    setDragActive(prev => ({ ...prev, [type]: true }));
+                } else if (e.type === "dragleave") {
+                    setDragActive(prev => ({ ...prev, [type]: false }));
+                }
+            };
+
+            const handleDrop = (e, type) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setDragActive(prev => ({ ...prev, [type]: false }));
+
+                if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                    if (type === 'resume') {
+                        setResumeFile(e.dataTransfer.files[0]);
+                    } else {
+                        setJobFile(e.dataTransfer.files[0]);
+                    }
+                }
+            };
+
+            const handleFileChange = (e, type) => {
+                if (e.target.files && e.target.files[0]) {
+                    if (type === 'resume') {
+                        setResumeFile(e.target.files[0]);
+                    } else {
+                        setJobFile(e.target.files[0]);
+                    }
+                }
+            };
+
+            const readFileContent = (file) => {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => resolve(e.target.result);
+                    reader.onerror = reject;
+                    reader.readAsText(file);
+                });
+            };
+
+            const analyzeResume = async () => {
+                if (!apiKey || !resumeFile || !jobFile) {
+                    setError('Please provide API key and both files');
+                    return;
+                }
+
+                setIsAnalyzing(true);
+                setError('');
+                setResults(null);
+
+                try {
+                    const resumeText = await readFileContent(resumeFile);
+                    const jobText = await readFileContent(jobFile);
+
+                    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${apiKey}`
+                        },
+                        body: JSON.stringify({
+                            model: 'gpt-4o',
+                            response_format: { type: 'json_object' },
+                            messages: [
+                                {
+                                    role: 'system',
+                                    content: 'You analyze resumes against job descriptions and provide structured feedback in JSON format.'
+                                },
+                                {
+                                    role: 'user',
+                                    content: `You are an ATS (Applicant Tracking System) analyzer. Evaluate the compatibility between the resume and job description below.
+
+Resume:
+${resumeText}
+
+Job Description:
+${jobText}
+
+Provide a JSON response with the following:
+1. "match_score": A percentage (0-100) representing overall match
+2. "missing_keywords": List of important keywords from the job description missing in the resume
+3. "recommendations": List of specific improvements
+4. "strengths": List of areas where the resume aligns well with the job
+5. "ats_readability": Assessment of format/structure for ATS systems`
+                                }
+                            ]
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`API Error: ${response.statusText}`);
+                    }
+
+                    const data = await response.json();
+                    const analysis = JSON.parse(data.choices[0].message.content);
+                    setResults(analysis);
+                } catch (err) {
+                    setError(err.message || 'An error occurred during analysis');
+                } finally {
+                    setIsAnalyzing(false);
+                }
+            };
+
+            return (
+                <div className="min-h-screen relative">
+                    {/* Animated gradient background */}
+                    <div className="gradient-bg">
+                        <div className="gradient-orb orb-1"></div>
+                        <div className="gradient-orb orb-2"></div>
+                        <div className="gradient-orb orb-3"></div>
+                    </div>
+
+                    {/* Main content */}
+                    <div className="relative z-10 container mx-auto px-4 py-12 max-w-6xl">
+                        {/* Header */}
+                        <div className="text-center mb-12 fade-in">
+                            <h1 className="text-6xl font-bold mb-4 bg-gradient-to-r from-indigo-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">
+                                Resume ATS Checker
+                            </h1>
+                            <p className="text-zinc-400 text-lg">
+                                Analyze your resume against job descriptions with AI-powered insights
+                            </p>
+                        </div>
+
+                        {/* API Key Input */}
+                        <div className="glass-card p-6 mb-8 fade-in" style={{ animationDelay: '0.1s' }}>
+                            <label className="block text-sm font-medium mb-2 text-zinc-300">
+                                OpenAI API Key
+                            </label>
+                            <input
+                                type="password"
+                                value={apiKey}
+                                onChange={(e) => setApiKey(e.target.value)}
+                                placeholder="sk-..."
+                                className="input-field"
+                            />
+                        </div>
+
+                        {/* File Upload Section */}
+                        <div className="grid md:grid-cols-2 gap-6 mb-8">
+                            {/* Resume Upload */}
+                            <div className="glass-card p-6 fade-in" style={{ animationDelay: '0.2s' }}>
+                                <label className="block text-sm font-medium mb-4 text-zinc-300">
+                                    Upload Resume
+                                </label>
+                                <div
+                                    className={`upload-area ${dragActive.resume ? 'active' : ''}`}
+                                    onDragEnter={(e) => handleDrag(e, 'resume')}
+                                    onDragLeave={(e) => handleDrag(e, 'resume')}
+                                    onDragOver={(e) => handleDrag(e, 'resume')}
+                                    onDrop={(e) => handleDrop(e, 'resume')}
+                                    onClick={() => resumeInputRef.current?.click()}
+                                >
+                                    <UploadIcon />
+                                    <p className="mt-4 text-zinc-400">
+                                        {resumeFile ? (
+                                            <span className="flex items-center justify-center gap-2">
+                                                <FileIcon />
+                                                {resumeFile.name}
+                                            </span>
+                                        ) : (
+                                            <>
+                                                Drop resume here or click to browse
+                                                <span className="block text-sm text-zinc-500 mt-1">
+                                                    TXT, PDF, or DOCX
+                                                </span>
+                                            </>
+                                        )}
+                                    </p>
+                                    <input
+                                        ref={resumeInputRef}
+                                        type="file"
+                                        onChange={(e) => handleFileChange(e, 'resume')}
+                                        accept=".txt,.pdf,.docx"
+                                        className="hidden"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Job Description Upload */}
+                            <div className="glass-card p-6 fade-in" style={{ animationDelay: '0.3s' }}>
+                                <label className="block text-sm font-medium mb-4 text-zinc-300">
+                                    Upload Job Description
+                                </label>
+                                <div
+                                    className={`upload-area ${dragActive.job ? 'active' : ''}`}
+                                    onDragEnter={(e) => handleDrag(e, 'job')}
+                                    onDragLeave={(e) => handleDrag(e, 'job')}
+                                    onDragOver={(e) => handleDrag(e, 'job')}
+                                    onDrop={(e) => handleDrop(e, 'job')}
+                                    onClick={() => jobInputRef.current?.click()}
+                                >
+                                    <UploadIcon />
+                                    <p className="mt-4 text-zinc-400">
+                                        {jobFile ? (
+                                            <span className="flex items-center justify-center gap-2">
+                                                <FileIcon />
+                                                {jobFile.name}
+                                            </span>
+                                        ) : (
+                                            <>
+                                                Drop job description here or click to browse
+                                                <span className="block text-sm text-zinc-500 mt-1">
+                                                    TXT, PDF, or DOCX
+                                                </span>
+                                            </>
+                                        )}
+                                    </p>
+                                    <input
+                                        ref={jobInputRef}
+                                        type="file"
+                                        onChange={(e) => handleFileChange(e, 'job')}
+                                        accept=".txt,.pdf,.docx"
+                                        className="hidden"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Error Message */}
+                        {error && (
+                            <div className="glass-card p-4 mb-8 border-red-500/50 bg-red-500/10 fade-in">
+                                <div className="flex items-center gap-2 text-red-400">
+                                    <AlertIcon />
+                                    {error}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Analyze Button */}
+                        <div className="text-center mb-12 fade-in" style={{ animationDelay: '0.4s' }}>
+                            <button
+                                onClick={analyzeResume}
+                                disabled={isAnalyzing || !apiKey || !resumeFile || !jobFile}
+                                className="btn-primary text-lg px-12"
+                            >
+                                {isAnalyzing ? (
+                                    <span className="flex items-center gap-2">
+                                        <div className="spinner"></div>
+                                        Analyzing...
+                                    </span>
+                                ) : (
+                                    'Analyze Resume'
+                                )}
+                            </button>
+                        </div>
+
+                        {/* Results Section */}
+                        {results && (
+                            <div className="space-y-6 fade-in">
+                                {/* Match Score */}
+                                <div className="glass-card p-8 text-center">
+                                    <div className="flex justify-center mb-6">
+                                        <ScoreCircle score={results.match_score} />
+                                    </div>
+                                </div>
+
+                                {/* ATS Readability */}
+                                <div className="glass-card p-6">
+                                    <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                                        <span className="text-cyan-400">📋</span>
+                                        ATS Readability Assessment
+                                    </h3>
+                                    <p className="text-zinc-300 leading-relaxed">
+                                        {results.ats_readability}
+                                    </p>
+                                </div>
+
+                                {/* Strengths and Missing Keywords Grid */}
+                                <div className="grid md:grid-cols-2 gap-6">
+                                    {/* Strengths */}
+                                    <div className="glass-card p-6">
+                                        <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                                            <span className="text-green-400">💪</span>
+                                            Strengths
+                                        </h3>
+                                        <div className="space-y-3">
+                                            {results.strengths.map((strength, idx) => (
+                                                <div key={idx} className="flex items-start gap-2">
+                                                    <span className="text-green-400 mt-1">
+                                                        <CheckIcon />
+                                                    </span>
+                                                    <span className="text-zinc-300 text-sm">
+                                                        {strength}
+                                                    </span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Missing Keywords */}
+                                    <div className="glass-card p-6">
+                                        <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                                            <span className="text-red-400">🚩</span>
+                                            Missing Keywords
+                                        </h3>
+                                        <div className="space-y-3">
+                                            {results.missing_keywords.map((keyword, idx) => (
+                                                <div key={idx} className="flex items-start gap-2">
+                                                    <span className="text-red-400 mt-1">
+                                                        <XIcon />
+                                                    </span>
+                                                    <span className="text-zinc-300 text-sm mono">
+                                                        {keyword}
+                                                    </span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Recommendations */}
+                                <div className="glass-card p-6">
+                                    <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                                        <span className="text-purple-400">🔧</span>
+                                        Recommendations
+                                    </h3>
+                                    <div className="space-y-4">
+                                        {results.recommendations.map((rec, idx) => (
+                                            <div key={idx} className="flex gap-3">
+                                                <span className="text-purple-400 font-semibold mono text-sm mt-1">
+                                                    {idx + 1}.
+                                                </span>
+                                                <p className="text-zinc-300 leading-relaxed">
+                                                    {rec}
+                                                </p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        ReactDOM.render(<ResumeATSChecker />, document.getElementById('root'));
+    </script>
+</body>
+</html>

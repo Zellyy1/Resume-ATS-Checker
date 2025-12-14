@@ -394,10 +394,7 @@ SOFTWARE.
 
 Need help? Here's how to get support:
 
-- 📧 **Email**: support@example.com
-- 💬 **Discord**: [Join our community](#)
-- 🐦 **Twitter**: [@ats_analyzer](#)
-- 📝 **Issues**: [GitHub Issues](https://github.com/yourusername/resume-ats-analyzer/issues)
+- 📧 **Email**: premnath4th@gmail.com
 
 ---
 
